@@ -1,0 +1,105 @@
+
+<main class="relative min-h-screen w-full bg-gray-900 text-white font-sans overflow-hidden">
+
+  @switch (view()) {
+    @case ('welcome') {
+      <div class="absolute inset-0 bg-cover bg-center" style="background-image: url(https://picsum.photos/1200/800?blur=5&grayscale&image=1073)"></div>
+      <div class="relative z-10 flex flex-col items-center justify-center min-h-screen bg-black/60 p-8 text-center">
+        <div class="mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 text-cyan-400" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2c-4.97 0-9 4.03-9 9 0 2.17.76 4.15 2 5.74V22l4.1-1.54c1.13.35 2.33.54 3.57.54 4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 16c-1.38 0-2.73-.3-3.96-.85l-4.04 1.51v-3.41C2.89 12.36 2 10.28 2 8c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7z"/>
+            <path d="M12 4c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0 8c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"/>
+          </svg>
+        </div>
+        <h1 class="text-5xl md:text-6xl font-bold tracking-tight text-white mb-4 drop-shadow-lg">
+          Landmark Lens
+        </h1>
+        <p class="max-w-2xl text-lg md:text-xl text-gray-300 mb-8 drop-shadow">
+          Your personal AI tour guide. Snap a photo of any landmark to instantly learn its story.
+        </p>
+        <button (click)="startCapture()" class="px-8 py-4 bg-cyan-500 text-white font-bold rounded-full text-lg hover:bg-cyan-400 focus:outline-none focus:ring-4 focus:ring-cyan-300 transition-all duration-300 transform hover:scale-105 shadow-lg shadow-cyan-500/50">
+          Start Your Tour
+        </button>
+      </div>
+    }
+    @case ('capturing') {
+      <div class="relative flex flex-col items-center justify-center min-h-screen bg-black">
+        <video #videoElement autoplay playsinline class="w-full h-full object-cover"></video>
+        <canvas #canvasElement class="hidden"></canvas>
+        <div class="absolute bottom-0 left-0 right-0 p-4 bg-black/50 backdrop-blur-sm flex justify-around items-center">
+          <button (click)="reset()" class="p-4 rounded-full text-white hover:bg-white/20 transition-colors">
+             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+          </button>
+          <button (click)="captureImage()" class="w-20 h-20 rounded-full border-4 border-white bg-white/30 hover:bg-white/50 focus:outline-none focus:ring-4 focus:ring-white/50 transition-all"></button>
+          <label for="file-upload" class="p-4 rounded-full text-white hover:bg-white/20 transition-colors cursor-pointer">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+          </label>
+          <input id="file-upload" type="file" accept="image/*" class="hidden" (change)="handleFileUpload($event)">
+        </div>
+      </div>
+    }
+    @case ('loading') {
+      <div class="flex flex-col items-center justify-center min-h-screen bg-gray-900/80">
+        <svg class="animate-spin h-12 w-12 text-cyan-400 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p class="text-lg text-gray-300">{{ loadingMessage() }}</p>
+      </div>
+    }
+    @case ('result') {
+      @if (result(); as res) {
+        <div class="relative w-full min-h-screen flex flex-col justify-end">
+          <img [src]="res.image" alt="Captured landmark" class="absolute inset-0 w-full h-full object-cover -z-10">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent"></div>
+
+          <div class="relative z-10 p-6 md:p-8 text-white space-y-4 max-h-[80vh] overflow-y-auto">
+            <h2 class="text-4xl md:text-5xl font-bold tracking-tight drop-shadow-lg">{{ res.name }}</h2>
+            
+            <div class="flex items-center space-x-4">
+              <button (click)="narrateHistory()" class="flex items-center justify-center w-14 h-14 bg-cyan-500 rounded-full hover:bg-cyan-400 focus:outline-none focus:ring-4 focus:ring-cyan-300 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                @if (isPlaying()) {
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5z"/></svg>
+                } @else {
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="currentColor" viewBox="0 0 16 16"><path d="M10.804 8 5 4.633v6.734L10.804 8z"/></svg>
+                }
+              </button>
+              <button (click)="reset()" class="px-6 py-3 bg-gray-700/80 text-white font-semibold rounded-full text-sm hover:bg-gray-600/80 focus:outline-none focus:ring-4 focus:ring-gray-500 transition-colors">
+                Start Over
+              </button>
+            </div>
+            
+            <p class="text-base md:text-lg text-gray-200 leading-relaxed max-w-3xl prose prose-invert">
+              {{ res.history }}
+            </p>
+
+            @if (res.sources.length > 0) {
+              <div class="pt-4">
+                <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">Sources</h3>
+                <div class="flex flex-wrap gap-2">
+                  @for (source of res.sources; track source.web.uri; let i = $index) {
+                    <a [href]="source.web.uri" target="_blank" rel="noopener noreferrer" class="text-xs bg-gray-800/80 text-cyan-300 px-3 py-1 rounded-full hover:bg-gray-700/80 hover:text-cyan-200 transition-colors">
+                       {{ i + 1 }}. {{ source.web.title || "Source link" }}
+                    </a>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    }
+    @case ('error') {
+      <div class="flex flex-col items-center justify-center min-h-screen bg-black/60 p-8 text-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-red-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <h2 class="text-3xl font-bold text-white mb-2">An Error Occurred</h2>
+        <p class="text-lg text-gray-300 mb-6 max-w-md">{{ errorMessage() }}</p>
+        <button (click)="reset()" class="px-8 py-3 bg-red-600 text-white font-bold rounded-full hover:bg-red-500 focus:outline-none focus:ring-4 focus:ring-red-400 transition-colors">
+          Try Again
+        </button>
+      </div>
+    }
+  }
+</main>

@@ -1,0 +1,7 @@
+{
+  "name": "Landmark Lens",
+  "description": "An AI-powered photo tourism app. Snap a picture of a landmark, and the app will identify it, provide its history, and create a narrated audio guide for you.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
